@@ -1,6 +1,8 @@
 import controlP5.*; // import ControlP5 Library
+import processing.serial.*; // serial communication w/ Arduino
 
 ControlP5 cp5;
+Serial port;
 
 // Colors and Dimensions
 int background_color = #555555;
@@ -34,6 +36,11 @@ void setup() {
   addMotorButton(cp5, "DC", mid_width, 100, but_width, but_height, #880000);
   addMotorButton(cp5, "Servo", mid_width, 250, but_width, but_height, #008800);
   addMotorButton(cp5, "Stepper", mid_width, 400, but_width, but_height, #000088);
+  
+  // Step 1: run Serial.list() to find available serial ports
+  // Step 2: change index of Serial.list() to match port connected to Arduino Uno 
+  printArray(Serial.list());
+  port = new Serial(this, Serial.list()[1], 9600);
 }
 
 void draw() {
@@ -48,10 +55,13 @@ void draw() {
 
 void DC() {
   print("DC pressed!\n");
+  port.write('d');
 }
 void Servo() {
-  print("Servo motor pressed!\n");
+  print("Servo pressed!\n");
+  port.write('v');
 }
 void Stepper() {
-  print("Stepper motor pressed!\n");
+  print("Stepper pressed!\n");
+  port.write('p');
 }
