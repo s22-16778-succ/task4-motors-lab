@@ -16,11 +16,11 @@ void addMotorButton(ControlP5 c, String str,
   PFont font = createFont("PTMono-Bold", 15);
   // print(PFont.list()); // see full list of available fonts
   
-  c.addButton(str)   // name of button
-   .setPosition(x,y) // upper-left corner
-   .setSize(w,h)     // (width, height)
-   .setFont(font)    // font type
-   .setColorBackground(clr);
+  c.addButton(str)           // name of button
+   .setPosition(x,y)         // upper-left corner
+   .setSize(w,h)             // (width, height)
+   .setFont(font)            // font type
+   .setColorBackground(clr); // button color
 }
 
 void setup() {
