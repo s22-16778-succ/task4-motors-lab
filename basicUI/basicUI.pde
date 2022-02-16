@@ -25,7 +25,7 @@ void addMotorToggle(ControlP5 c, String str,
                     int x, int y, int w, int h,
                     int clr) {
                       
-  PFont font = createFont("Arial", 20);
+  PFont font = createFont("PTMono", 20);
   // print(PFont.list()); // see full list of available fonts
   
   c.addToggle(str, false)    // name of toggle
