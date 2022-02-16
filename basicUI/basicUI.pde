@@ -14,7 +14,7 @@ int scr_width = 1000, scr_height = 600;
 int but_width = 100, but_height = 70;
 int text_width = 150, text_height = 30;
 int text_space = text_height + 10;
-int col0 = 10, col1 = 180, col2 = 350, col3 = 550;
+int col0 = 10, col1 = 180, col2 = 350, col3 = 550, col4 = 680;
 int row0 = 150, row1 = 300, row2 = 450;
 
 // TEXTBOX code taken from https://www.youtube.com/watch?v=N753XIKAUPo
@@ -25,7 +25,7 @@ void addMotorToggle(ControlP5 c, String str,
                     int x, int y, int w, int h,
                     int clr) {
                       
-  PFont font = createFont("PTMono", 20);
+  PFont font = createFont("Arial", 20);
   // print(PFont.list()); // see full list of available fonts
   
   c.addToggle(str, false)    // name of toggle
@@ -58,12 +58,17 @@ void setup() {
     active[i] = false;
   
   // Add all labels
-  textFont(createFont("PTMono-Bold", 15));
+  textFont(createFont("Arial", 20));
   textAlign(LEFT);
-  text("DC Pos (deg)",      col0, row0 + 15);
-  text("Servo Pos (deg)",   col0, row1 + 15);
-  text("Servo Spd (rpm)",   col0, row1 + text_space + 15);
-  text("Stepper Pos (deg)", col0, row2 + 15);
+  textLeading(25);
+  text("DC Pos (deg)",      col0, row0 + 20);
+  text("Servo Pos (deg)",   col0, row1 + 20);
+  text("Servo Spd (rpm)",   col0, row1 + text_space + 20);
+  text("Stepper Pos (deg)", col0, row2 + 20);
+  
+  text("Potentiometer\nAngle (deg)", col4, row0 + 20);
+  text("Ultrasonic Sensor\nDistance (cm)", col4, row1 + 20);
+  text("IR Proximity\nDistance (cm)", col4, row2 + 20);
 
   // Add all textboxes
   addTextbox(col1, row0, text_width, text_height);

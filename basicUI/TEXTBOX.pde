@@ -45,7 +45,7 @@ public class TEXTBOX {
       // DRAWING THE TEXT ITSELF
       fill(Foreground);
       textSize(TEXTSIZE);
-      textFont(createFont("PTMono-Bold", 15));
+      textFont(createFont("Arial", 20));
       text(Text, X + (textWidth("a") / 2), Y + TEXTSIZE);
    }
    
