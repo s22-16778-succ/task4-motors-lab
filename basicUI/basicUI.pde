@@ -8,17 +8,20 @@ Serial port;
 // Colors
 int background_color = #555555;
 int title_color = #FFFF00;
+int io_color = #8C8C8C;
+int text_color = #000000;
 
 // Dimensions
 int scr_width = 1000, scr_height = 600;
 int but_width = 100, but_height = 70;
 int text_width = 150, text_height = 30;
 int text_space = text_height + 10;
-int col0 = 10, col1 = 180, col2 = 350, col3 = 550, col4 = 680;
+int col0 = 10, col1 = 180, col2 = 350, col3 = 530, col4 = 660, col5 = 800;
 int row0 = 150, row1 = 300, row2 = 450;
 
 // TEXTBOX code taken from https://www.youtube.com/watch?v=N753XIKAUPo
 ArrayList<TEXTBOX> textboxes = new ArrayList<TEXTBOX>();
+ArrayList<String> sensors = new ArrayList<String>();
 boolean[] active = new boolean[6];
 
 void addMotorToggle(ControlP5 c, String str,
@@ -67,7 +70,7 @@ void setup() {
   text("Stepper Pos (deg)", col0, row2 + 20);
   
   text("Potentiometer\nAngle (deg)", col4, row0 + 20);
-  text("Ultrasonic Sensor\nDistance (cm)", col4, row1 + 20);
+  text("Ultrasonic\nDistance (cm)", col4, row1 + 20);
   text("IR Proximity\nDistance (cm)", col4, row2 + 20);
 
   // Add all textboxes
@@ -75,6 +78,11 @@ void setup() {
   addTextbox(col1, row1, text_width, text_height);
   addTextbox(col1, row1 + text_space, text_width, text_height);
   addTextbox(col1, row2, text_width, text_height);
+  
+  // Add all initial sensor outputs
+  sensors.add("N/A");
+  sensors.add("N/A");
+  sensors.add("N/A");
   
   // Step 1: run Serial.list() to find available serial ports
   // Step 2: change index of Serial.list() to match port connected to Arduino Uno 
@@ -97,9 +105,30 @@ void draw() {
   for (TEXTBOX t : textboxes)
     t.DRAW();
   
+  // Draw sensor outputs
+  fill(io_color);
+  noStroke();
+  rect(col5, row0, text_width, text_height);
+  rect(col5, row1, text_width, text_height);
+  rect(col5, row2, text_width, text_height);
+  
+  fill(text_color);
+  textFont(createFont("Arial", 20));
+  textAlign(LEFT);
+  text(sensors.get(0), col5, row0, 200, 200);
+  text(sensors.get(1), col5, row1, 200, 200);
+  text(sensors.get(2), col5, row2, 200, 200);
+  
   // Check toggle states 
   checkToggles();
 }
+
+
+/**
+  Toggle Functions (pass info to Arduino Sketch)
+  lower-case means SENSOR-CONTROLLED
+  upper-case means USER-CONTROLLED
+**/
 
 void mousePressed() {
   // Check if textbox clicked
@@ -121,18 +150,8 @@ void keyPressed() {
   }
 }
 
-/**
-  Toggle Functions (pass info to Arduino Sketch)
-  lower-case means SENSOR-CONTROLLED
-  upper-case means USER-CONTROLLED
-**/
-
-
 void controlEvent(ControlEvent theEvent) {
   if(theEvent.isController()) {
-    //theEvent.getController().getName()
-    //theEvent.getController().getValue()
-    
     switch(theEvent.getController().getName()) {
       case "DC\n(User)":         active[0] ^= true; break;
       case "Servo\n(User)":      active[1] ^= true; break;
@@ -156,21 +175,35 @@ void checkToggles() {
   }
   if(active[3]){ // DC (Sensor)
     port_write("d");
+    sensors.set(0, port_read());
   }
   if(active[4]){ // Servo (Sensor)
     port_write("v");
+    sensors.set(1, port_read());
   }
   if(active[5]){ // Stepper (Sensor)
     port_write("p");
+    sensors.set(2, port_read());
   }
 }
 
 void port_write(String... args) {
   for (String arg : args) {
-    //port.write(arg);
-    //port.write(' ');
     print(arg);
     print(' ');
   }
   println();
+  
+  //for (String arg : args) {
+  //  port.write(arg);
+  //  port.write(' ');
+  //}
+  //port.write('\n');
+}
+
+String port_read() {
+  String buffer = port.readString();   
+  if (buffer != null)
+    return buffer;
+  return "N/A";
 }
