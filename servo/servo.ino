@@ -12,7 +12,7 @@ void setup() {
 
 void setServo() {
   val_angle = analogRead(potpin_angle);
- val_angle = map(val_angle, 0, 1023, 0, 180);
+  val_angle = map(val_angle, 0, 1023, 0, 180);
   myservo.write(val_angle);
   val_angle = map(val_angle, 0, 180, 0, 200);
   Serial.write(val_angle);

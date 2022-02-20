@@ -64,7 +64,7 @@ void loop() {
   Serial.print(": ");
   Serial.println(current_pos);
 
-  distance_fn(); 
+  UDS_distance_fn(); 
 }
 
 void encoder(){ //encoder function
@@ -75,7 +75,7 @@ void encoder(){ //encoder function
 }
 
 
-double distance_fn() { //ultrasonic sensor function
+double UDS_distance_fn() { //ultrasonic sensor function
   digitalWrite(trig_pin, LOW);
   delay(1);
   digitalWrite(trig_pin, HIGH);
