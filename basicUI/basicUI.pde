@@ -65,8 +65,8 @@ void setup() {
   textAlign(LEFT);
   textLeading(25);
   text("DC Pos (deg)",      col0, row0 + 20);
+  text("DC Spd (rpm)",      col0, row0 + text_space + 20);
   text("Servo Pos (deg)",   col0, row1 + 20);
-  text("Servo Spd (rpm)",   col0, row1 + text_space + 20);
   text("Stepper Pos (deg)", col0, row2 + 20);
   
   text("Potentiometer\nAngle (deg)", col4, row0 + 20);
@@ -75,8 +75,8 @@ void setup() {
 
   // Add all textboxes
   addTextbox(col1, row0, text_width, text_height);
+  addTextbox(col1, row0 + text_space, text_width, text_height);
   addTextbox(col1, row1, text_width, text_height);
-  addTextbox(col1, row1 + text_space, text_width, text_height);
   addTextbox(col1, row2, text_width, text_height);
   
   // Add all initial sensor outputs
@@ -165,10 +165,10 @@ void controlEvent(ControlEvent theEvent) {
 
 void checkToggles() {
   if(active[0]){ // DC (User)
-    port_write("D", textboxes.get(0).Text);
+    port_write("D", textboxes.get(0).Text, textboxes.get(1).Text);
   }
   if(active[1]){ // Servo (User)
-    port_write("V", textboxes.get(1).Text, textboxes.get(2).Text);
+    port_write("V", textboxes.get(2).Text);
   }
   if(active[2]){ // Stepper (User)
     port_write("P", textboxes.get(3).Text);
