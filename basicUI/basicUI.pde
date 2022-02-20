@@ -165,7 +165,7 @@ void controlEvent(ControlEvent theEvent) {
 
 void checkToggles() {
   if(active[0]){ // DC (User)
-    port_write("D", textboxes.get(0).Text, textboxes.get(1).Text);
+    port_write("D", textboxes.get(0).Text);
   }
   if(active[1]){ // Servo (User)
     port_write("V", textboxes.get(2).Text);
@@ -174,7 +174,7 @@ void checkToggles() {
     port_write("P", textboxes.get(3).Text);
   }
   if(active[3]){ // DC (Sensor)
-    port_write("d");
+    port_write("d", textboxes.get(1).Text);
     sensors.set(0, port_read());
   }
   if(active[4]){ // Servo (Sensor)
