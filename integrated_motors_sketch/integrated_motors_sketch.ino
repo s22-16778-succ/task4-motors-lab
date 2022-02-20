@@ -36,13 +36,22 @@ void loop() {
 void flagSwitch(char c) {
   switch (c) {
     case 'D':
-      driveDC();
+      driveDC_GUI();
+      break;
+    case 'd':
+      driveDC_sensor();
       break;
     case 'V':
-      driveServo();
+      driveServo_GUI();
+      break;
+    case 'v':
+      driveServo_sensor();
       break;
     case 'P':
-      driveStepper();
+      driveStepper_GUI();
+      break;
+    case 'p':
+      driveStepper_sensor();
       break;
     default:
       Serial.print("DO NOT TYPE HERE!!!");
@@ -51,21 +60,39 @@ void flagSwitch(char c) {
 
 // Basic LED Test. Replace functions with code for each motor
 
-void driveDC() {
+void driveDC_GUI() {
   digitalWrite(7, HIGH);
   delay(1000);
   digitalWrite(7, LOW);
 }
-void driveServo() {
+void driveDC_sensor() {
+  digitalWrite(7, HIGH);
+  delay(1000);
+  digitalWrite(7, LOW);
+}
+
+void driveServo_GUI() {
   digitalWrite(5, HIGH);
   delay(1000);
   digitalWrite(5, LOW);
 }
-void driveStepper() {
+void driveServo_sensor() {
+  digitalWrite(5, HIGH);
+  delay(1000);
+  digitalWrite(5, LOW);
+}
+
+void driveStepper_GUI() {
   digitalWrite(3, HIGH);
   delay(1000);
   digitalWrite(3, LOW);
 }
+void driveStepper_sensor() {
+  digitalWrite(3, HIGH);
+  delay(1000);
+  digitalWrite(3, LOW);
+}
+
 
 // Sahil's Servo Code
 
