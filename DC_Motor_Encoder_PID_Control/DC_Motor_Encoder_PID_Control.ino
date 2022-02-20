@@ -1,7 +1,7 @@
 
 // Encoder Pins
-int ENC_A = 4;    // yellow wire on motor
-int ENC_B = 5;    // white wire on motor
+int ENC_A = 2;    // yellow wire on motor
+int ENC_B = 3;    // white wire on motor
 
 // Motor (Controller) Pins
 int ENA = 7;      // yellow wire (orange and brown wires on motor driver)
@@ -21,12 +21,12 @@ double travel_time;
 double distance;
 
 // (1) input a target position for motor
-const int target_pos = 1000;
-//target = 250*sin(prevT/1e6);
+//const int target_pos = 420;
+const int target_pos = 2000; // 420 = 1 rotation
 
 // (2) tune PID constants
-const float Kp = 2.9;    // proportional constant
-const float Ki = 0.0016; // integral constant
+const float Kp = 1.5;    // proportional constant
+const float Ki = 0.001; // integral constant
 const float Kd = 0.001;  // derivative constant
 
 void setup() {
@@ -55,6 +55,7 @@ void loop() {
  
   // (5) set DC motor power and direction
   float Mo_p = min(fabs(control_s), 255);
+  Serial.println(control_s);
   int direc_shaft = (control_s >= 0) ? 1 : -1; // >0 is CCW, <0 is CW
   set_dc_Motors(direc_shaft, Mo_p);
 
@@ -89,8 +90,8 @@ double distance_fn() { //ultrasonic sensor function
   Serial.println(distance);
 }
 
-void set_dc_Motors(int direc, int pwmVal){ // DC motor function 
-  analogWrite(ENA, pwmVal);
+void set_dc_Motors(int direc, float Mo_p){ // DC motor function 
+  analogWrite(ENA, Mo_p);
 
   if (distance <= 3 || direc == 0) {
     digitalWrite(IN_pin_1, LOW);
