@@ -20,13 +20,9 @@ int echo_pin = 11;
 double travel_time;
 double distance;
 
-// (1) input a target position for motor
-//const int target_pos = 420;
-const int target_pos = 2000; // 420 = 1 rotation
-
-// (2) tune PID constants
+// (1) tune PID constants
 const float Kp = 1.5;    // proportional constant
-const float Ki = 0.001; // integral constant
+const float Ki = 0.001;  // integral constant
 const float Kd = 0.001;  // derivative constant
 
 void setup() {
@@ -38,9 +34,20 @@ void setup() {
   pinMode(trig_pin, OUTPUT);
   pinMode(echo_pin, INPUT);
 }
- 
+
 void loop() {
-  
+//  driveDC_GUI(2000); // (2) input a target position for motor; 420 = 1 rotation
+  driveDC_servo(150); // set motor speed
+}
+
+void encoder(){ //encoder function
+  if(digitalRead(ENC_B) > 0)
+    current_pos++;
+  else
+    current_pos--;
+}
+
+void driveDC_GUI(int target_pos) {
   // (3) difference in time
   long cu_time = micros(); //current time
   float time_diff = ((float) (cu_time - prev_time))/( 1.0e6 ); //delta time
@@ -56,24 +63,28 @@ void loop() {
   // (5) set DC motor power and direction
   float Mo_p = min(fabs(control_s), 255);
   Serial.println(control_s);
-  int direc_shaft = (control_s >= 0) ? 1 : -1; // >0 is CCW, <0 is CW
-  set_dc_Motors(direc_shaft, Mo_p);
+  int direc = (control_s >= 0) ? 1 : -1; // direction of shaft; >0 is CCW, <0 is CW
+  
+  // (6) set DC Motors
+  analogWrite(ENA, Mo_p);
+  if (direc == 0) {
+    digitalWrite(IN_pin_1, LOW);
+    digitalWrite(IN_pin_2, LOW);
+  }
+  else if (direc == 1) {
+    digitalWrite(IN_pin_1, HIGH);
+    digitalWrite(IN_pin_2, LOW);
+  }
+  else if (direc == -1) {
+    digitalWrite(IN_pin_1, LOW);
+    digitalWrite(IN_pin_2, HIGH);
+  }
 
-  // (6) read new shaft position
+  // (7) read new shaft position
   Serial.print(target_pos);
   Serial.print(": ");
   Serial.println(current_pos);
-
-  UDS_distance_fn(); 
 }
-
-void encoder(){ //encoder function
-  if(digitalRead(ENC_B) > 0)
-    current_pos++;
-  else
-    current_pos--;
-}
-
 
 double UDS_distance_fn() { //ultrasonic sensor function
   digitalWrite(trig_pin, LOW);
@@ -90,21 +101,16 @@ double UDS_distance_fn() { //ultrasonic sensor function
   Serial.println(distance);
 }
 
-void set_dc_Motors(int direc, float Mo_p){ // DC motor function 
-  analogWrite(ENA, Mo_p);
-
-  if (distance <= 3 || direc == 0) {
+void driveDC_servo(float Mo_p) {
+  UDS_distance_fn();
+  if (distance < 10) {
     digitalWrite(IN_pin_1, LOW);
     digitalWrite(IN_pin_2, LOW);
     return;
   }
-  
-  if (direc == 1) {
+  else {
+    analogWrite(ENA, Mo_p);
     digitalWrite(IN_pin_1, HIGH);
     digitalWrite(IN_pin_2, LOW);
-  }
-  else if (direc == -1) {
-    digitalWrite(IN_pin_1, LOW);
-    digitalWrite(IN_pin_2, HIGH);
   }
 }
