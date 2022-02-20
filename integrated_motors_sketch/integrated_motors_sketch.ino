@@ -81,9 +81,12 @@ void driveServo_GUI() {
   digitalWrite(5, LOW);
 }
 void driveServo_sensor() {
-  digitalWrite(5, HIGH);
-  delay(1000);
-  digitalWrite(5, LOW);
+  val_angle = analogRead(potpin_angle);
+  val_angle = map(val_angle, 0, 1023, 0, 180);
+  myservo.write(val_angle);
+  val_angle = map(val_angle, 0, 180, 0, 200);
+  Serial.write(val_angle);
+  delay(5);
 }
 
 // STEPPER MOTOR FUNCTIONS
@@ -96,17 +99,4 @@ void driveStepper_sensor() {
   digitalWrite(3, HIGH);
   delay(1000);
   digitalWrite(3, LOW);
-}
-
-
-// Sahil's Servo setting function.
-
-void setServo() {
-  val_angle = analogRead(potpin_angle);
-  val_angle = map(val_angle, 0, 1023, 0, 180);
-  myservo.write(val_angle);
-  val_angle = map(val_angle, 0, 180, 0, 200);
-  Serial.write(val_angle);
-  delay(5);
-
 }

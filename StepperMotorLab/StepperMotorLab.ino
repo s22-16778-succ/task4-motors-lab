@@ -41,11 +41,11 @@ void loop() {
      runMotor(); 
      //test code motor should hit 90 ,180 and -45 degrees respec
 //      if (count ==0){
-//        SetAngle(90);
+//        SetAngleStepper(90);
 //        delay(1000);
-//        SetAngle(180);
+//        SetAngleStepper(180);
 //        delay(1000);
-//        SetAngle(-45);
+//        SetAngleStepper(-45);
 //        delay(1000);
 //        count++;
 //      }  
@@ -102,7 +102,7 @@ int readIR(){
   return x; 
 }
 
-void SetAngle(float angle){
+void SetAngleStepper(float angle){
    int set = angle*stepsPerRevolution/360;
    int signTotal = ( totalSteps> 0) - (totalSteps < 0);
 
