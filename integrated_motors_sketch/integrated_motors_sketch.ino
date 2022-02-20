@@ -6,6 +6,7 @@
 *          Jaiden Napier (jinapier)
 *          Ignacio Peon Zapata (ipeon)
 *          Sahil Saini (sssaini)
+* Functionality: Allows for GUI and sensor measurements to control three different types of motors.
 */
 
 #include <Servo.h>
@@ -33,6 +34,7 @@ void loop() {
   setServo();
 }
 
+// Takes in char input and calls the appropriate function.
 void flagSwitch(char c) {
   switch (c) {
     case 'D':
@@ -58,8 +60,9 @@ void flagSwitch(char c) {
   }
 }
 
-// Basic LED Test. Replace functions with code for each motor
+// Motor functions
 
+//DC MOTOR FUNCTIONS
 void driveDC_GUI() {
   digitalWrite(7, HIGH);
   delay(1000);
@@ -71,6 +74,7 @@ void driveDC_sensor() {
   digitalWrite(7, LOW);
 }
 
+// SERVO MOTOR FUNCTIONS
 void driveServo_GUI() {
   digitalWrite(5, HIGH);
   delay(1000);
@@ -82,6 +86,7 @@ void driveServo_sensor() {
   digitalWrite(5, LOW);
 }
 
+// STEPPER MOTOR FUNCTIONS
 void driveStepper_GUI() {
   digitalWrite(3, HIGH);
   delay(1000);
@@ -94,7 +99,7 @@ void driveStepper_sensor() {
 }
 
 
-// Sahil's Servo Code
+// Sahil's Servo setting function.
 
 void setServo() {
   val_angle = analogRead(potpin_angle);
