@@ -52,11 +52,11 @@ void setup() {
   // Add all toggles
   textAlign(CENTER, CENTER);
   addMotorToggle(cp5, "DC\n(User)", col2, row0, but_width, but_height, #880000);
-  addMotorToggle(cp5, "Servo\n(User)", col2, row1, but_width, but_height, #008800);
-  addMotorToggle(cp5, "Stepper\n(User)", col2, row2, but_width, but_height, #000088);
+  addMotorToggle(cp5, "Stepper\n(User)", col2, row1, but_width, but_height, #008800);
+  addMotorToggle(cp5, "Servo\n(User)", col2, row2, but_width, but_height, #000088);
   addMotorToggle(cp5, "DC\n(Sensor)", col3, row0, but_width, but_height, #880000);
-  addMotorToggle(cp5, "Servo\n(Sensor)", col3, row1, but_width, but_height, #008800);
-  addMotorToggle(cp5, "Stepper\n(Sensor)", col3, row2, but_width, but_height, #000088);
+  addMotorToggle(cp5, "Stepper\n(Sensor)", col3, row1, but_width, but_height, #008800);
+  addMotorToggle(cp5, "Servo\n(Sensor)", col3, row2, but_width, but_height, #000088);
   for (int i=0; i<active.length; i++)
     active[i] = false;
   
@@ -65,19 +65,20 @@ void setup() {
   textAlign(LEFT);
   textLeading(25);
   text("DC Pos (deg)",      col0, row0 + 20);
-  text("DC Spd (rpm)",      col0, row0 + text_space + 20);
-  text("Servo Pos (deg)",   col0, row1 + 20);
-  text("Stepper Pos (deg)", col0, row2 + 20);
+  text("DC Spd (rpm)",      col4, row0 + 20);
+  text("Stepper Pos (deg)", col0, row1 + 20);
+  text("Servo Pos (deg)",   col0, row2 + 20);
   
-  text("Potentiometer\nAngle (deg)", col4, row0 + 20);
-  text("Ultrasonic\nDistance (cm)", col4, row1 + 20);
-  text("IR Proximity\nDistance (cm)", col4, row2 + 20);
+  text("Ultrasonic\nDistance (cm)", col4, row0 + text_height + 20);
+  text("IR Proximity\nDistance (cm)", col4, row1 + 20);
+  text("Potentiometer\nAngle (deg)", col4, row2 + 20);
 
   // Add all textboxes
-  addTextbox(col1, row0, text_width, text_height);
-  addTextbox(col1, row0 + text_space, text_width, text_height);
-  addTextbox(col1, row1, text_width, text_height);
-  addTextbox(col1, row2, text_width, text_height);
+  addTextbox(col1, row0, text_width, text_height); // DC
+  addTextbox(col5, row0, text_width, text_height); // DC
+  addTextbox(col1, row1, text_width, text_height); // Stepper
+  addTextbox(col1, row2, text_width, text_height); // Servo
+  
   
   // Add all initial sensor outputs
   sensors.add("N/A");
@@ -87,7 +88,7 @@ void setup() {
   // Step 1: run Serial.list() to find available serial ports
   // Step 2: change index of Serial.list() to match port connected to Arduino Uno 
   printArray(Serial.list());
-  port = new Serial(this, Serial.list()[1], 9600);
+  port = new Serial(this, Serial.list()[0], 9600);
 }
 
 void draw() {
@@ -108,18 +109,18 @@ void draw() {
   // Draw sensor outputs
   fill(io_color);
   noStroke();
-  rect(col5, row0, text_width, text_height);
+  rect(col5, row0 + text_height + 20, text_width, text_height);
   rect(col5, row1, text_width, text_height);
   rect(col5, row2, text_width, text_height);
   
   fill(text_color);
   textFont(createFont("Arial", 20));
   textAlign(LEFT);
-  text(sensors.get(0), col5, row0, 200, 200);
+  text(sensors.get(0), col5, row0 + text_height + 20, 200, 200);
   text(sensors.get(1), col5, row1, 200, 200);
   text(sensors.get(2), col5, row2, 200, 200);
   
-  // Check toggle states 
+  // Check toggle states
   checkToggles();
 }
 
@@ -153,12 +154,23 @@ void keyPressed() {
 void controlEvent(ControlEvent theEvent) {
   if(theEvent.isController()) {
     switch(theEvent.getController().getName()) {
-      case "DC\n(User)":         active[0] ^= true; break;
-      case "Servo\n(User)":      active[1] ^= true; break;
-      case "Stepper\n(User)":    active[2] ^= true; break;
-      case "DC\n(Sensor)":       active[3] ^= true; break;
-      case "Servo\n(Sensor)":    active[4] ^= true; break;
-      case "Stepper\n(Sensor)":  active[5] ^= true; break;
+      case "DC\n(User)":         onlyOneActive(0); break;
+      case "Stepper\n(User)":    onlyOneActive(1); break;
+      case "Servo\n(User)":      onlyOneActive(2); break;
+      case "DC\n(Sensor)":       onlyOneActive(3); break;
+      case "Stepper\n(Sensor)":  onlyOneActive(4); break;
+      case "Servo\n(Sensor)":    onlyOneActive(5); break;
+    }
+  }
+}
+
+void onlyOneActive(int n) {
+  for (int i=0; i<active.length; i++) {
+    if (i == n)
+      active[i] ^= true;
+    else
+    {
+      active[i] = false;
     }
   }
 }
@@ -167,43 +179,45 @@ void checkToggles() {
   if(active[0]){ // DC (User)
     port_write("D", textboxes.get(0).Text);
   }
-  if(active[1]){ // Servo (User)
-    port_write("V", textboxes.get(2).Text);
+  if(active[1]){ // Stepper (User)
+    port_write("P", textboxes.get(2).Text);
   }
-  if(active[2]){ // Stepper (User)
-    port_write("P", textboxes.get(3).Text);
+  if(active[2]){ // Servo (User)
+    port_write("V", textboxes.get(3).Text);
   }
   if(active[3]){ // DC (Sensor)
     port_write("d", textboxes.get(1).Text);
     sensors.set(0, port_read());
   }
-  if(active[4]){ // Servo (Sensor)
-    port_write("v");
+  if(active[4]){ // Stepper (Sensor)
+    port_write("p ");
     sensors.set(1, port_read());
   }
-  if(active[5]){ // Stepper (Sensor)
-    port_write("p");
+  if(active[5]){ // Servo (Sensor)
+    port_write("v ");
     sensors.set(2, port_read());
   }
+  
 }
 
 void port_write(String... args) {
   for (String arg : args) {
-    print(arg);
-    print(' ');
+    port.write(arg);
+    print(arg + " ");
   }
-  println();
-  
-  //for (String arg : args) {
-  //  port.write(arg);
-  //  port.write(' ');
-  //}
-  //port.write('\n');
+  port.write('\n');
+  print("\n");
 }
 
+String old_buf = "N/A";
+
 String port_read() {
-  String buffer = port.readString();   
+  String buffer = port.readStringUntil(10);
   if (buffer != null)
+  {
+    old_buf = buffer;
     return buffer;
-  return "N/A";
+  }
+  else
+    return old_buf;
 }

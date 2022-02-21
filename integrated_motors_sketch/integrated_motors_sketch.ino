@@ -13,20 +13,19 @@
 
 // Servo variables BEGIN
 Servo myservo;  // create servo object to control a servo
-int POT = A5;// analog pin used to connect the potentiometer
-int val_angle;    // variable to read the value from the analog pin
-int SERVO = 13;
+const int POT = A5;// analog pin used to connect the potentiometer
+const int SERVO = 13; // servo pin
 // Servo variables END
 
 // DC Motor Variables BEGIN
 // Encoder Pins
-int ENC_A = 2;    // yellow wire on motor
-int ENC_B = 3;    // white wire on motor
+const int ENC_A = 2;    // yellow wire on motor
+const int ENC_B = 3;    // white wire on motor
 
 // DC Motor (Controller) Pins
-int ENA = 7;      // yellow wire (orange and brown wires on motor driver)
-int DC_IN_1 = 8; // purple wire on motor driver
-int DC_IN_2 = 9; // green wire on motor driver
+const int ENA = 6;      // yellow wire (orange and brown wires on motor driver)
+const int DC_IN_1 = 8; // purple wire on motor driver
+const int DC_IN_2 = 9; // green wire on motor driver
 
 // PID variables 
 long prev_time = micros();
@@ -35,10 +34,8 @@ int current_pos = 0;
 float previous_error = 0;
 
 // Ultrasonic sensor variables 
-int TRIG = 12;
-int ECHO = 11;
-double travel_time;
-double distance;
+const int TRIG = 12;
+const int ECHO = 11;
 
 // (1) tune PID constants
 const float Kp = 1.5;    // proportional constant
@@ -90,52 +87,68 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ENC_A), encoder, RISING);
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
+  pinMode(ENA, OUTPUT);
 
   // Stepper Motor Setup
   pinMode(stepPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
   digitalWrite(dirPin, LOW);
+
+  delay(200);
 }
+
+bool GUI = true;
 
 void loop() {
-//  if (Serial.available())
-//  {
-//    char c = Serial.read();
-//    flagSwitch(c);
-//  }
-
-//  driveServo_sensor();
-  driveDC_GUI(360);
-//  driveDC_sensor(255);
-//  driveStepper_sensor();
-//  driveStepper_GUI(180);
+  if (GUI) // run full GUI
+  {
+    String inData = "";
+    while (Serial.available() > 0)
+    {
+      inData = Serial.readStringUntil('\n');
+      if (inData.length() < 2) break;
+  
+      char c = inData.charAt(0);
+      String param = inData.substring(1);
+      flagSwitch(c, param);
+    } 
+  }
+  else // Test calls to motor functions
+  {
+//    driveDC_GUI(360); // D360
+//    driveDC_sensor(255); // d255
+//    driveServo_GUI(0); // V0
+//    driveServo_sensor(); // v
+//    driveStepper_GUI(90); // P180
+//    driveStepper_sensor(); // p    
+  }
 }
 
+
+
 // Takes in char input and calls the appropriate function.
-//void flagSwitch(char c) {
-//  switch (c) {
-//    case 'D':
-//      driveDC_GUI();
-//      break;
-//    case 'd':
-//      driveDC_sensor();
-//      break;
-//    case 'V':
-//      driveServo_GUI();
-//      break;
-//    case 'v':
-//      driveServo_sensor();
-//      break;
-//    case 'P':
-//      driveStepper_GUI();
-//      break;
-//    case 'p':
-//      driveStepper_sensor();
-//      break;
-//    default:
-//      Serial.print("DO NOT TYPE HERE!!!");
-//  }
-//}
+void flagSwitch(char c, String param) {
+  switch (c) {
+    case 'D':
+      driveDC_GUI(param.toFloat());
+      break;
+    case 'd':
+      driveDC_sensor(param.toFloat());
+      break;
+    case 'V':
+      driveServo_GUI(param.toFloat());
+      break;
+    case 'v':
+      driveServo_sensor();
+      break;
+    case 'P':
+      driveStepper_GUI(param.toFloat());
+      break;
+    case 'p':
+      driveStepper_sensor();
+      break;
+  }
+}
 
 // Motor functions
 
@@ -180,34 +193,40 @@ void driveDC_GUI(float angle) {
   Serial.print(": ");
   Serial.println(current_pos);
 }
+
 void driveDC_sensor(float Mo_p) {
-  UDS_distance_fn();
+  double distance = UDS_distance_fn();
+  Serial.println(distance);
+  
   if (distance < 10) {
     digitalWrite(DC_IN_1, LOW);
     digitalWrite(DC_IN_2, LOW);
-    return;
   }
   else {
     analogWrite(ENA, Mo_p);
-    digitalWrite(DC_IN_1, HIGH);
-    digitalWrite(DC_IN_2, LOW);
+    digitalWrite(DC_IN_1, LOW);
+    digitalWrite(DC_IN_2, HIGH);
   }
 }
 
 // SERVO MOTOR FUNCTIONS
-void driveServo_GUI() {
-  
+void driveServo_GUI(float angle) {
+  float angle_cal = map(angle, 0, 200, 0, 180);   // calibrated angle
+  myservo.write(angle_cal);
+  Serial.println(angle_cal);
 }
+
 void driveServo_sensor() {
-  val_angle = analogRead(POT);
-  val_angle = map(val_angle, 0, 1023, 0, 180);
-  myservo.write(val_angle);
-  val_angle = map(val_angle, 0, 180, 0, 200);
-  Serial.write(val_angle);
-  delay(5);
+  float pot_value = analogRead(POT); // potentiometer measurement that corresponds to angle
+  float angle = map(pot_value, 0, 1023, 0, 180);
+  myservo.write(angle);
+  // float angle_cal = map(angle, 0, 180, 0, 200);  // calibrated angle
+  Serial.println(angle);
+  delay(100);
 }
 
 // STEPPER MOTOR FUNCTIONS
+
 void driveStepper_GUI(int angle) {
   int set = angle*stepsPerRevolution/360;
   int signTotal = (totalSteps>0) - (totalSteps<0);
@@ -250,7 +269,7 @@ void driveStepper_sensor(){
   lastswitchState = reading;
   Serial.println(outState);
   if (outState == true){
-    float data = readIR()-25; // the middle of the Ir sensor range is 35
+    float data = readIR()-25; // the middle of the IR sensor range is 35
     data = min(data,25);
     int microdelay = 6000-(abs(data)/25*5500);
     
@@ -269,6 +288,7 @@ void driveStepper_sensor(){
     }
     steps += 10;
   }
+  delay(5);
 }
 
 /** Ignacio Helper Functions */
@@ -286,12 +306,9 @@ double UDS_distance_fn() { //ultrasonic sensor function
   delay(1);
   digitalWrite(TRIG, LOW);
 
-  travel_time = pulseIn(ECHO, HIGH);
-  distance = (travel_time / 2) / 29;
-  delay(200);
-
-  Serial.print("Distance (cm): ");
-  Serial.println(distance);
+  double travel_time = pulseIn(ECHO, HIGH);
+  double distance = (travel_time / 2) / 29;
+  return distance;
 }
 
 
@@ -299,6 +316,7 @@ double UDS_distance_fn() { //ultrasonic sensor function
 int readIR(){
   int value = analogRead(IR_SENSOR); //Read the distance in cm and store it
   float x = sqrt(-a/(c-value) + pow(b/(2*(c-value)),2)) - b/(2*(c-value));
-  Serial.println("Distance: "+String(x)+(" cm")); 
+  // Serial.println("Distance: "+String(x)+(" cm"));
+  Serial.println(x);
   return x; 
 }
