@@ -103,10 +103,12 @@ void loop() {
 //    char c = Serial.read();
 //    flagSwitch(c);
 //  }
-  // driveServo_sensor();
-  // driveDC_GUI(2000); // (2) input a target position for motor; 420 = 1 rotation
-  // driveDC_sensor(255); // set motor speed
-  driveStepper_sensor();
+
+//  driveServo_sensor();
+  driveDC_GUI(360);
+//  driveDC_sensor(255);
+//  driveStepper_sensor();
+//  driveStepper_GUI(180);
 }
 
 // Takes in char input and calls the appropriate function.
@@ -138,7 +140,9 @@ void loop() {
 // Motor functions
 
 //DC MOTOR FUNCTIONS
-void driveDC_GUI(int target_pos) {
+void driveDC_GUI(float angle) {
+  int target_pos = (angle * 440.0/360); // pos=440 is 1 rotation
+  
   // (3) difference in time
   long cu_time = micros(); //current time
   float time_diff = ((float) (cu_time - prev_time))/( 1.0e6 ); //delta time
@@ -204,9 +208,32 @@ void driveServo_sensor() {
 }
 
 // STEPPER MOTOR FUNCTIONS
-void driveStepper_GUI() {
+void driveStepper_GUI(int angle) {
+  int set = angle*stepsPerRevolution/360;
+  int signTotal = (totalSteps>0) - (totalSteps<0);
   
+  steps =(set - signTotal*abs(totalSteps)%stepsPerRevolution); // total step # and ditection to get to correct position
+  int signStep = (steps>0) - (steps<0); // sign of the steps
+  steps = signStep*abs(steps)%stepsPerRevolution;// number of steps to get to equivelent position on a range of [-360, 360] degrees
+  
+  /* Take the shortest path to the location ie if at -90 degress and told to go to 180 it well move 90 
+     degrees to -180 instead of 270 degrees to positive since they are the same angle. */
+  if(abs(steps) > stepsPerRevolution/2)
+    steps -= signStep*stepsPerRevolution;
+  if (steps < 0)
+    digitalWrite(dirPin, HIGH);
+  else
+    digitalWrite(dirPin, LOW);
+  
+  for(int x=0; x<abs(steps); x++){
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(2000);
+  }
+  totalSteps += steps;
 }
+
 void driveStepper_sensor(){   
   int reading = digitalRead(switchPin); // read the state of the switch into a local variable
   if (reading != lastswitchState) {     // If the switch changed, due to noise or pressing:
@@ -223,30 +250,28 @@ void driveStepper_sensor(){
   lastswitchState = reading;
   Serial.println(outState);
   if (outState == true){
-    float Data = readIR()-25; // the middle of the Ir sensor range is 35
-    Data= min(Data,25);
-    int microdelay = 6000-(abs(Data)/25*5500);
+    float data = readIR()-25; // the middle of the Ir sensor range is 35
+    data = min(data,25);
+    int microdelay = 6000-(abs(data)/25*5500);
     
-    int sign = (Data > 0) - (Data < 0);
-    if (sign == -1){
+    int sign = (data > 0) - (data < 0);
+    if (sign == -1)
       digitalWrite(dirPin, HIGH);
-    }
-    else{
+    else
       digitalWrite(dirPin, LOW);
-    }
+
     // Spin motor
-    for(int x = 0; x <15; x++){
+    for(int x=0; x<15; x++){
       digitalWrite(stepPin, HIGH);
       delayMicroseconds(microdelay);
       digitalWrite(stepPin, LOW);
       delayMicroseconds(microdelay);
     }
-    steps = steps+10;
+    steps += 10;
   }
 }
 
-// Ignacio Functions
-
+/** Ignacio Helper Functions */
 void encoder(){ //encoder function
   if(digitalRead(ENC_B) > 0)
     current_pos++;
@@ -269,40 +294,11 @@ double UDS_distance_fn() { //ultrasonic sensor function
   Serial.println(distance);
 }
 
-// Jaiden Functions
 
-// IR Proximity Sensor read
+/** Jaiden Helper Functions */
 int readIR(){
   int value = analogRead(IR_SENSOR); //Read the distance in cm and store it
   float x = sqrt(-a/(c-value) + pow(b/(2*(c-value)),2)) - b/(2*(c-value));
   Serial.println("Distance: "+String(x)+(" cm")); 
   return x; 
-}
-
-void SetAngleStepper(float angle){
-   int set = angle*stepsPerRevolution/360;
-   int signTotal = ( totalSteps> 0) - (totalSteps < 0);
-
-   steps =(set - signTotal*abs(totalSteps)%stepsPerRevolution); // total step # and ditection to get to correvct position
-   int signStep = (steps> 0) - (steps < 0);// sign of the steps
-   steps = signStep*abs(steps)%stepsPerRevolution;// numbers of steps to get to equivelent position on a range of -360 to 360 degrees
-   // take the shortest path to the location ie if at -90 degress and told to go to 180 it well move 90 
-   //degrees to -180 instead of 270 degress to positive since they are the same angle
-   if(abs(steps) > stepsPerRevolution/2)
-   {
-     steps = steps-signStep*stepsPerRevolution;
-   }
-   if (steps < 0){
-   digitalWrite(dirPin, HIGH);
-   }
-   else{
-    digitalWrite(dirPin, LOW);
-   }
-   for(int x = 0; x <abs(steps); x++){
-     digitalWrite(stepPin, HIGH);
-     delayMicroseconds(2000);    
-     digitalWrite(stepPin, LOW);
-     delayMicroseconds(2000);
-   }
-   totalSteps = totalSteps + steps;
 }
