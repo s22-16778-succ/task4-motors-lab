@@ -27,11 +27,8 @@ const int ENA = 6;      // yellow wire (orange and brown wires on motor driver)
 const int DC_IN_1 = 8; // purple wire on motor driver
 const int DC_IN_2 = 9; // green wire on motor driver
 
-// PID variables 
-long prev_time = micros();
-float integral = 0;
-int current_pos = 0;
-float previous_error = 0;
+// PID variables
+int current_pos;
 
 // Ultrasonic sensor variables 
 const int TRIG = 12;
@@ -97,7 +94,7 @@ void setup() {
   delay(200);
 }
 
-bool GUI = true;
+bool GUI = false;
 
 void loop() {
   if (GUI) // run full GUI
@@ -115,11 +112,14 @@ void loop() {
   }
   else // Test calls to motor functions
   {
+//    driveDC_GUI(90); // D360
 //    driveDC_GUI(360); // D360
-//    driveDC_sensor(255); // d255
+//    driveDC_GUI(0); // D360
+//    driveDC_GUI(50); // D360
+    driveDC_sensor(255); // d255
 //    driveServo_GUI(0); // V0
 //    driveServo_sensor(); // v
-//    driveStepper_GUI(90); // P180
+//    driveStepper_GUI(180); // P180
 //    driveStepper_sensor(); // p    
   }
 }
@@ -142,7 +142,7 @@ void flagSwitch(char c, String param) {
       driveServo_sensor();
       break;
     case 'P':
-      driveStepper_GUI(param.toFloat());
+      driveStepper_GUI(param.toInt());
       break;
     case 'p':
       driveStepper_sensor();
@@ -153,45 +153,60 @@ void flagSwitch(char c, String param) {
 // Motor functions
 
 //DC MOTOR FUNCTIONS
-void driveDC_GUI(float angle) {
-  int target_pos = (angle * 440.0/360); // pos=440 is 1 rotation
+void driveDC_GUI(int angle) {
+  int target_pos = (int) (angle * 440.0/360.0); // pos=440 is 1 rotation
+  int error = 1000;
+
+  long prev_time = micros();
+  float integral = 0;
+  current_pos = 0;
+  float previous_error = 0;
+
+  while (true) {
+    // (3) difference in time
+    long cu_time = micros(); //current time
+    float time_diff = ((float) (cu_time - prev_time))/( 1.0e6 ); //delta time
+    prev_time = cu_time;
+   
+    // (4) finding the error and PID
+    error = current_pos - target_pos;                     // error formula
+    float derivative = (error - previous_error)/time_diff;    // derivative formula (rate of change)
+    integral += error*time_diff;                              // integral formula
+    float control_s = Kp*error + Kd*derivative + Ki*integral; // control signal
+    previous_error = error;                                   // store previous error
+   
+    // (5) set DC motor power and direction
+    float Mo_p = min(fabs(control_s), 255);
+    Serial.println(control_s);
+    int direc = (control_s >= 0) ? 1 : -1; // direction of shaft; >0 is CCW, <0 is CW
+    
+    // (6) set DC Motors
+    analogWrite(ENA, Mo_p);
+    if (direc == 0) {
+      digitalWrite(DC_IN_1, LOW);
+      digitalWrite(DC_IN_2, LOW);
+    }
+    else if (direc == 1) {
+      digitalWrite(DC_IN_1, HIGH);
+      digitalWrite(DC_IN_2, LOW);
+    }
+    else if (direc == -1) {
+      digitalWrite(DC_IN_1, LOW);
+      digitalWrite(DC_IN_2, HIGH);
+    }
   
-  // (3) difference in time
-  long cu_time = micros(); //current time
-  float time_diff = ((float) (cu_time - prev_time))/( 1.0e6 ); //delta time
-  prev_time = cu_time;
- 
-  // (4) finding the error and PID
-  int error = current_pos - target_pos;                     // error formula
-  float derivative = (error - previous_error)/time_diff;    // derivative formula (rate of change)
-  integral += error*time_diff;                              // integral formula
-  float control_s = Kp*error + Kd*derivative + Ki*integral; // control signal
-  previous_error = error;                                   // store previous error
- 
-  // (5) set DC motor power and direction
-  float Mo_p = min(fabs(control_s), 255);
-  Serial.println(control_s);
-  int direc = (control_s >= 0) ? 1 : -1; // direction of shaft; >0 is CCW, <0 is CW
-  
-  // (6) set DC Motors
-  analogWrite(ENA, Mo_p);
-  if (direc == 0) {
-    digitalWrite(DC_IN_1, LOW);
-    digitalWrite(DC_IN_2, LOW);
-  }
-  else if (direc == 1) {
-    digitalWrite(DC_IN_1, HIGH);
-    digitalWrite(DC_IN_2, LOW);
-  }
-  else if (direc == -1) {
-    digitalWrite(DC_IN_1, LOW);
-    digitalWrite(DC_IN_2, HIGH);
+    // (7) read new shaft position
+    Serial.print(target_pos);
+    Serial.print(": ");
+    Serial.println(current_pos);
+
+    if (abs(error) < 40) break;
   }
 
-  // (7) read new shaft position
-  Serial.print(target_pos);
-  Serial.print(": ");
-  Serial.println(current_pos);
+  digitalWrite(DC_IN_1, LOW);
+  digitalWrite(DC_IN_2, LOW);
+  delay(500);
+  
 }
 
 void driveDC_sensor(float Mo_p) {
@@ -207,6 +222,7 @@ void driveDC_sensor(float Mo_p) {
     digitalWrite(DC_IN_1, LOW);
     digitalWrite(DC_IN_2, HIGH);
   }
+//  delay(100);
 }
 
 // SERVO MOTOR FUNCTIONS
@@ -222,35 +238,37 @@ void driveServo_sensor() {
   myservo.write(angle);
   // float angle_cal = map(angle, 0, 180, 0, 200);  // calibrated angle
   Serial.println(angle);
-  delay(100);
+//  delay(100);
 }
 
 // STEPPER MOTOR FUNCTIONS
 
 void driveStepper_GUI(int angle) {
-  int set = angle*stepsPerRevolution/360;
-  int signTotal = (totalSteps>0) - (totalSteps<0);
-  
-  steps =(set - signTotal*abs(totalSteps)%stepsPerRevolution); // total step # and ditection to get to correct position
-  int signStep = (steps>0) - (steps<0); // sign of the steps
-  steps = signStep*abs(steps)%stepsPerRevolution;// number of steps to get to equivelent position on a range of [-360, 360] degrees
-  
-  /* Take the shortest path to the location ie if at -90 degress and told to go to 180 it well move 90 
-     degrees to -180 instead of 270 degrees to positive since they are the same angle. */
-  if(abs(steps) > stepsPerRevolution/2)
-    steps -= signStep*stepsPerRevolution;
-  if (steps < 0)
-    digitalWrite(dirPin, HIGH);
-  else
+   int set = angle*stepsPerRevolution/360;
+   int signTotal = ( totalSteps> 0) - (totalSteps < 0);
+   steps =(set - signTotal*abs(totalSteps)%stepsPerRevolution); // total step # and ditection to get to correvct position
+   int signStep = (steps> 0) - (steps < 0);// sign of the steps
+   steps = signStep*abs(steps)%stepsPerRevolution;// numbers of steps to get to equivelent position on a range of -360 to 360 degrees
+   // take the shortest path to the location ie if at -90 degress and told to go to 180 it well move 90 
+   //degrees to -180 instead of 270 degress to positive since they are the same angle
+   if(abs(steps) > stepsPerRevolution/2)
+   {
+     steps = steps-signStep*stepsPerRevolution;
+   }
+   if (steps < 0){
+   digitalWrite(dirPin, HIGH);
+   }
+   else{
     digitalWrite(dirPin, LOW);
-  
-  for(int x=0; x<abs(steps); x++){
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(2000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(2000);
-  }
-  totalSteps += steps;
+   }
+   for(int x = 0; x <abs(steps); x++){
+     digitalWrite(stepPin, HIGH);
+     delayMicroseconds(2000);    
+     digitalWrite(stepPin, LOW);
+     delayMicroseconds(2000);
+   }
+   totalSteps += steps;
+//   delay(500);
 }
 
 void driveStepper_sensor(){   
@@ -305,6 +323,7 @@ double UDS_distance_fn() { //ultrasonic sensor function
   digitalWrite(TRIG, HIGH);
   delay(1);
   digitalWrite(TRIG, LOW);
+  delay(100);
 
   double travel_time = pulseIn(ECHO, HIGH);
   double distance = (travel_time / 2) / 29;

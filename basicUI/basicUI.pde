@@ -177,10 +177,12 @@ void onlyOneActive(int n) {
 
 void checkToggles() {
   if(active[0]){ // DC (User)
-    port_write("D", textboxes.get(0).Text);
+    port_write("D ", textboxes.get(0).Text);
+    //delay(200); // adjust this if GUI breaks
   }
   if(active[1]){ // Stepper (User)
     port_write("P", textboxes.get(2).Text);
+    delay(200); // adjust this if GUI breaks
   }
   if(active[2]){ // Servo (User)
     port_write("V", textboxes.get(3).Text);
@@ -188,6 +190,7 @@ void checkToggles() {
   if(active[3]){ // DC (Sensor)
     port_write("d", textboxes.get(1).Text);
     sensors.set(0, port_read());
+    //delay(200); // adjust this if GUI breaks
   }
   if(active[4]){ // Stepper (Sensor)
     port_write("p ");

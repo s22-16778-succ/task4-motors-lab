@@ -34,21 +34,20 @@ void setup()
   digitalWrite(dirPin, LOW);
   Serial.begin(9600);
   delay(500);
-  
 }
 
 void loop() {
-     runMotor(); 
+     //runMotor(); 
      //test code motor should hit 90 ,180 and -45 degrees respec
-//      if (count ==0){
-//        SetAngleStepper(90);
-//        delay(1000);
-//        SetAngleStepper(180);
-//        delay(1000);
-//        SetAngleStepper(-45);
-//        delay(1000);
-//        count++;
-//      }  
+      if (count ==0){
+        SetAngleStepper(180);
+        delay(1000);
+        SetAngleStepper(180);
+        delay(1000);
+        SetAngleStepper(180);
+        delay(1000);
+        count++;
+      }  
 }
 
 void  runMotor(){
